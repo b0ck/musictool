@@ -1,8 +1,7 @@
 """Tool for calculating the average rating of albums in a folder and its sub-folders.
+Takes root folder(s) as command line argument(s).
 
 Requires Python 3.6 and 'pip install pytaglib'
-Version 1.0
-Date: 23 Jan 2017
 """
 
 import statistics
