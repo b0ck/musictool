@@ -8,7 +8,7 @@ import taglib
 import os
 import sys
 from models.song import Song
-from logic.multiprocesssing import MultiProcessing
+from logic.multiprocessing import MultiProcessing
 
 
 class FileScanner(MultiProcessing):
