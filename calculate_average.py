@@ -8,9 +8,10 @@ import taglib
 import os
 import sys
 from models.song import Song
+from logic.multiprocesssing import MultiProcessing
 
 
-class FileScanner(object):
+class FileScanner(MultiProcessing):
 
     ratings_text = {
         1: 'Worst ever',
@@ -28,6 +29,9 @@ class FileScanner(object):
     song_list = []
     album_ratings = {}
 
+    def __init__(self):
+        super().__init__()
+
     @staticmethod
     def get_tag(song, key, default):
         """
@@ -40,64 +44,65 @@ class FileScanner(object):
 
         return song.tags.get(key, [default])[0]
 
-    def scan_file(self, path):
+    def scan_file(self, file_path):
         """
 
-        :param path:
+        :param file_path:
         :return:
         """
 
-        song = taglib.File(path)
-        self.song_list.append(
-            Song(
+        song = taglib.File(file_path)
+        return Song(
                 track=self.get_tag(song, 'TRACKNUMBER', 0), title=self.get_tag(song, 'TITLE', '- No title -'),
-                album=self.get_tag(song, 'ALBUM', '- No album -'), ating=self.get_tag(song, 'RATING', 0)
+                album=self.get_tag(song, 'ALBUM', '- No album -'), rating=self.get_tag(song, 'RATING', 0)
             )
-        )
 
-    def scan_folder(self, root):
+    def scan_folder(self, root_folder):
         """
 
-        :param root:
+        :param root_folder:
         :return:
         """
 
         print(f"{'#':{2}} | {'Title':{20}} | {'Album':{20}} | {'Rating'}")
         print('=' * 57)
 
-        for path, subdirs, files in os.walk(root):
+        for path, subdirs, files in os.walk(root_folder):
             for file in files:
                 try:
-                    self.scan_file(os.path.join(path, file))
-                except:
+                    song = self.scan_file(os.path.join(path, file))
+                    print(song)
+                    self.song_list.append(song)
+                except Exception as ex:
+                    #print(ex)
                     pass
 
-    def get_albums(self):
+    def get_album_data(self, song):
         """
 
+        :param song:
         :return:
         """
 
-        for song in self.song_list:
-            if song.album not in self.album_ratings:
-                self.album_ratings[song.album] = []
+        if song.album not in self.album_ratings:
+            self.album_ratings[song.album] = []
 
-            if song.rating > 0:
-                self.album_ratings[song.album].append(song.rating)
+        if song.rating > 0:
+            self.album_ratings[song.album].append(song.rating)
 
-    def create_album_ratings(self):
+    def create_album_rating(self, album):
         """
 
+        :param album:
         :return:
         """
 
-        for album in self.album_ratings:
-            if self.album_ratings[album]:
-                rating = statistics.mean(self.album_ratings[album]) * 2
-                print(f'{album}: {rating:{0}.{2}f} ({rating:{0}.{0}f}/10) '
-                      f'-> {ratings_text[round(rating)]}')
-            else:
-                print(f'Album {album!r} has no ratings.')
+        if self.album_ratings[album]:
+            rating = statistics.mean(self.album_ratings[album]) * 2
+            print(f'{album}: {rating:{0}.{2}f} ({rating:{0}.{0}f}/10) '
+                  f'-> {ratings_text[round(rating)]}')
+        else:
+            print(f'Album {album!r} has no ratings.')
 
     def scan_library(self, root_folder=None):
         """
@@ -107,9 +112,9 @@ class FileScanner(object):
         """
 
         if root_folder:
-            self.scan_folder(root=root_folder)
-            self.get_albums()
-            self.create_album_ratings()
+            self.scan_folder(root_folder=root_folder)
+            self.run_queued_method('get_album_data', self.song_list)
+            self.run_queued_method('create_album_rating', self.album_ratings)
 
 
 if __name__ == "__main__":
