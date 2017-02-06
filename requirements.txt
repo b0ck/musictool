@@ -1,1 +1,3 @@
 pytaglib
+peewee
+PyQt5

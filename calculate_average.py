@@ -3,12 +3,13 @@ Tool for calculating the average rating of albums in a folder and its sub-folder
 Takes root folder(s) as command line argument(s).
 """
 
-import statistics
-import taglib
 import os
+import statistics
 import sys
-from models.song import Song
+import taglib
+
 from logic.multiprocessing import MultiProcessing
+from models.song import Song
 
 
 class FileScanner(MultiProcessing):
