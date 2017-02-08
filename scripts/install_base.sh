@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 rm musictool.db
+rm musictool_meta.db
 python3 cmd.py install
 #python3 cmd.py add_library <lib_name> <your_path_to_lib>
 #python3 cmd.py create_playlist test_playlist playlist_desc

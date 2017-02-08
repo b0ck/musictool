@@ -2,6 +2,7 @@ from peewee import *
 from settings import Settings
 
 db = SqliteDatabase(Settings.DB_FILE_NAME)
+metadb = SqliteDatabase(Settings.META_DB_FILE_NAME)
 
 
 class BaseModel(Model):
@@ -25,7 +26,6 @@ class Source(BaseModel):
 
     library = ForeignKeyField(Library)
     source_url = TextField()
-    metadata = BlobField()
 
     class Meta:
         indexes = (
@@ -41,12 +41,25 @@ class Playlist(BaseModel):
 
 class PlaylistFiles(BaseModel):
 
-    file = ForeignKeyField(Source)
+    source = ForeignKeyField(Source)
     playlist = ForeignKeyField(Playlist)
 
     class Meta:
         indexes = (
-            (('file', 'playlist'), True),
+            (('source', 'playlist'), True),
+        )
+
+
+class MetaData(BaseModel):
+
+    source = ForeignKeyField(Source)
+    key = CharField(max_length=255)
+    value = TextField()
+
+    class Meta:
+        database = metadb
+        indexes = (
+            (('source', 'key'), True),
         )
 
 
@@ -60,3 +73,5 @@ class ServerQueue(BaseModel):
 def install_db():
     db.connect()
     db.create_tables([Library, Source, Playlist, PlaylistFiles, ServerQueue])
+    metadb.connect()
+    metadb.create_tables([MetaData])

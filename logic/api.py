@@ -1,13 +1,15 @@
-import json
 import os
 import taglib
 
+from logic.helpers.multiprocessing import MultiProcessing
 from logic.modelapi import ModelAPI
-from logic.multiprocessing import MultiProcessing
 from settings import Settings
 
 
-class API(MultiProcessing, ModelAPI):
+class API(ModelAPI):
+
+    file_path_queue = MultiProcessing()
+    file_tag_queue = MultiProcessing()
 
     @staticmethod
     def _get_file_tags(file_path):
@@ -17,25 +19,28 @@ class API(MultiProcessing, ModelAPI):
         :return:
         """
 
-        tags_string = str(taglib.File(file_path).tags)
-        if tags_string:
-            if '{' in tags_string:
-                if not tags_string.startswith('{'):
-                    pos = tags_string.find('{')
-                    tags_string = tags_string[pos:]
+        return taglib.File(file_path).tags
 
-        return json.loads(tags_string)
-
-    def _scan_file(self, library, file_path):
+    def _add_file_tags(self, file):
         """
 
-        :param library:
+        :param file:
+        :return:
+        """
+
+        tags = self._get_file_tags(file_path=file.source_url)
+        self._add_tags_to_file(file_id=file.get_id(), tags=tags)
+
+    def _scan_file(self, library_id, file_path):
+        """
+
+        :param library_id:
         :param file_path:
         :return:
         """
 
-        tags = self._get_file_tags(file_path=file_path)
-        self._add_file_to_library(file_path=file_path, library=library, tags=tags)
+        file = self._add_file_to_library(file_path=file_path, library_id=library_id)
+        self.file_tag_queue.queue.put(file)
 
     def _scan_folder(self, root_folder_path):
         """
@@ -60,7 +65,7 @@ class API(MultiProcessing, ModelAPI):
 
                         if file_path:
                             if file_path not in file_list:
-                                self.queue.put(file_path)
+                                self.file_path_queue.queue.put(file_path)
                                 file_list.append(file_path)
 
                 except Exception as ex:
@@ -75,11 +80,17 @@ class API(MultiProcessing, ModelAPI):
         """
 
         lib = self._create_library(name=name, path=path)
-        self.clear_queue()
-        self.init_queue('_scan_file', Settings.MAX_THREADS, [lib])
+        self.file_tag_queue.clear_queue()
+        self.file_path_queue.clear_queue()
+
+        self.file_path_queue.init_queue(self, '_scan_file', Settings.MAX_THREADS, [lib.get_id()])
         self._scan_folder(root_folder_path=path)
-        self.run_queue()
-        self.clear_queue()
+        self.file_path_queue.run_queue()
+        self.file_path_queue.clear_queue()
+
+        self.file_tag_queue.init_queue(self, '_add_file_tags', Settings.MAX_THREADS, [])
+        self.file_tag_queue.run_queue()
+        self.file_tag_queue.clear_queue()
 
     def call_method(self, method_name, arguments=[]):
         """

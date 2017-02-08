@@ -1,3 +1,4 @@
 pytaglib
 peewee
+pygame
 PyQt5

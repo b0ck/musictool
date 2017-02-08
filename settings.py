@@ -5,3 +5,4 @@ class Settings(object):
     NOT_USED_ENDINGS = ['.jpg', '.jpeg', '.ini', '.db', '.txt', '.bmp']
     SERVER_WAIT_TIME = 60
     DB_FILE_NAME = 'musictool.db'
+    META_DB_FILE_NAME = 'musictool_meta.db'

@@ -1,5 +1,5 @@
 import models.db
-from models.db import Library, Source, ServerQueue, Playlist, PlaylistFiles
+from models.db import Library, Source, ServerQueue, Playlist, PlaylistFiles, MetaData, metadb
 
 
 class ModelAPI(object):
@@ -20,7 +20,7 @@ class ModelAPI(object):
         :return:
         """
 
-        return PlaylistFiles.create(file=file_id, playlist=playlist_id)
+        return PlaylistFiles.create(source=file_id, playlist=playlist_id)
 
     @staticmethod
     def _create_playlist(name, description):
@@ -53,23 +53,33 @@ class ModelAPI(object):
         return ServerQueue.get(ServerQueue.done == False)
 
     @staticmethod
-    def _add_file_to_library(file_path, library, tags):
+    def _add_file_to_library(file_path, library_id):
         """
 
         :param file_path:
-        :param library:
+        :param library_id:
+        :return:
+        """
+
+        return Source.create(source_url=file_path, library=library_id)
+
+    @staticmethod
+    def _add_tags_to_file(file_id, tags):
+        """
+
+        :param file_id:
         :param tags:
         :return:
         """
 
-        tags_string = str(tags)
-        if tags_string:
-            if '{' in tags_string:
-                if not tags_string.startswith('{'):
-                    pos = tags_string.find('{')
-                    tags_string = tags_string[pos:]
+        data_insert = []
 
-        return Source.create(source_url=file_path, library=library, metadata=tags_string)
+        for key, value in tags.items():
+            data_insert.append({'source': file_id, 'key': key, 'value': value})
+
+        if data_insert:
+            with metadb.atomic():
+                MetaData.insert_many(data_insert).execute()
 
     @staticmethod
     def _create_library(name, path):

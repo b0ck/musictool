@@ -1,13 +1,11 @@
-import sys
+import ast
 import time
-import json
 
-from PyQt5 import QtCore
-from logic.api import API
+from logic.serverapi import ServerAPI
 from settings import Settings
 
 
-class Server(QtCore.QObject, API):
+class Server(ServerAPI):
 
     def run_server(self):
         while True:
@@ -16,8 +14,11 @@ class Server(QtCore.QObject, API):
 
                 squeue = self.call_method('get_next_server_command')
                 if squeue:
-                    print("call method -> " + squeue.command)
-                    self.call_method(method_name=squeue.command, arguments=json.loads(squeue.argument_list))
+                    print("call method -> ", squeue.command)
+                    print("arguments -> ", squeue.argument_list)
+                    self.call_method(method_name=squeue.command, arguments=ast.literal_eval(squeue.argument_list))
+                    squeue.done = True
+                    squeue.save()
 
                 time.sleep(Settings.SERVER_WAIT_TIME)
 
@@ -27,8 +28,5 @@ class Server(QtCore.QObject, API):
 
 
 if __name__ == "__main__":
-    app = QtCore.QCoreApplication(sys.argv)
     server = Server()
     server.run_server()
-    sys.exit(app.exec_())
-

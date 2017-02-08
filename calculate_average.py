@@ -8,7 +8,7 @@ import statistics
 import sys
 import taglib
 
-from logic.multiprocessing import MultiProcessing
+from logic.helpers.multiprocessing import MultiProcessing
 from models.song import Song
 
 
