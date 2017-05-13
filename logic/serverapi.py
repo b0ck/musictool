@@ -1,8 +1,8 @@
-from logic.modelapi import ModelAPI
+from logic.api import API
 from models.db import Source
 from pygame import mixer
 
-class ServerAPI(ModelAPI):
+class ServerAPI(API):
 
     @staticmethod
     def _print_log(message):
@@ -37,6 +37,4 @@ class ServerAPI(ModelAPI):
         :return:
         """
 
-        function = getattr(self, '_' + method_name, None)
-        if function:
-            return function(*arguments)
+        super().call_method(self, method_name, arguments)

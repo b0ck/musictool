@@ -6,4 +6,4 @@ if __name__ == "__main__":
     api = API()
     method_name = sys.argv[1:][0]
     arguments = sys.argv[2:]
-    api.call_method(method_name=method_name, arguments=arguments)
+    api.call_method(called_object=api, method_name=method_name, arguments=arguments)

@@ -21,6 +21,20 @@ class API(ModelAPI):
 
         return taglib.File(file_path).tags
 
+    @staticmethod
+    def call_method(called_object, method_name, arguments=[]):
+        """
+
+        :param called_object:
+        :param method_name:
+        :param arguments:
+        :return:
+        """
+
+        function = getattr(called_object, '_' + method_name, None)
+        if function:
+            return function(*arguments)
+
     def _add_file_tags(self, file):
         """
 
@@ -91,15 +105,3 @@ class API(ModelAPI):
         self.file_tag_queue.init_queue(self, '_add_file_tags', Settings.MAX_THREADS, [])
         self.file_tag_queue.run_queue()
         self.file_tag_queue.clear_queue()
-
-    def call_method(self, method_name, arguments=[]):
-        """
-
-        :param method_name:
-        :param arguments:
-        :return:
-        """
-
-        function = getattr(self, '_' + method_name, None)
-        if function:
-            return function(*arguments)
